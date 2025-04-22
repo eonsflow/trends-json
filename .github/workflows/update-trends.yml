@@ -2,7 +2,7 @@ name: Update Trends JSON
 
 on:
   schedule:
-    - cron: "30 21 * * *"  # 매일 한국 시간 오전 6:30 (UTC 21:30)
+    - cron: "30 21 * * *"  # 매일 오전 6:30 KST (UTC 기준)
   workflow_dispatch:
 
 jobs:
@@ -16,7 +16,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
+        python-version: "3.10"
 
     - name: Install dependencies
       run: pip install beautifulsoup4 requests
@@ -24,14 +24,17 @@ jobs:
     - name: Run trend fetcher
       run: python .github/workflows/trend_fetcher.py
 
+    - name: Debug info
+      run: |
+        git config --global --list || true
+        git remote -v || true
+
     - name: Commit and push
-  env:
-  GH_PAT: ${{ secrets.eonsflow }}
-
-  run: |
-    git config user.name "언즈자동업데이트"
-    git config user.email "eons@eonsflow.dev"
-    git add trends.json
-    git commit -m "🔄 자동 업데이트: trends.json" || echo "변경 없음"
-    git push https://${eonsflow}@github.com/eonsflow/trends-json.git
-
+      env:
+        EONSFLOW: ${{ secrets.EONSFLOW }}
+      run: |
+        git config user.name "언즈자동업데이트"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add trends.json
+        git commit -m "🔄 자동 업데이트: trends.json" || echo "변경 없음"
+        git push https://${EONSFLOW}@github.com/eonsflow/trends-json.git
