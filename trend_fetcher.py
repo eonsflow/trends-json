@@ -8,43 +8,54 @@ def fetch_naver_trends():
     headers = {"User-Agent": "Mozilla/5.0"}
     res = requests.get(url, headers=headers)
     soup = BeautifulSoup(res.text, "html.parser")
-    return [span.text.strip() for span in soup.select(".item_title")]
+    keywords = [span.text.strip() for span in soup.select(".item_title")]
+    return keywords[:20]  # 최대 20개까지
 
 def fetch_google_trends():
-    url = "https://trends.google.com/trends/trendingsearches/daily/rss?geo=KR"
-    res = requests.get(url)
-    soup = BeautifulSoup(res.text, "xml")
-    return [item.find("title").text.strip() for item in soup.find_all("item")]
+    # 샘플 고정 (향후 Google Trends 연동 가능)
+    return ["환율", "손흥민", "디아블로 출시", "전세사기", "청년도약계좌", "청년 취업지원금", "테슬라 주가", "넷플릭스 해지", "카리나", "청약 일정", "아이폰16", "로또 당첨"]
 
-def merge_keywords(naver, google, max_count=20):
-    both = [kw for kw in naver if kw in google]
-    only_naver = [kw for kw in naver if kw not in google]
-    only_google = [kw for kw in google if kw not in naver]
-    return (both + only_naver + only_google)[:max_count]
+def merge_keywords():
+    naver = fetch_naver_trends()
+    google = fetch_google_trends()
+    combined = naver + google
+    deduped = []
+    seen = set()
+    for kw in combined:
+        if kw not in seen:
+            deduped.append(kw)
+            seen.add(kw)
+    return deduped[:20]
 
 def enrich_keywords(keywords):
+    from random import choice, randint
+    difficulty = ["하", "중", "상"]
+    related = [["재난", "기상청"], ["넷플릭스", "구독"], ["청년", "지원금"], ["아이폰", "출시일"], ["EPL", "득점왕"]]
+    channels = ["이슈", "실생활", "정책", "경제", "엔터", "스포츠"]
+
     enriched = []
     for kw in keywords:
         enriched.append({
             "keyword": kw,
-            "volume": 10000 + len(kw) * 1000,
-            "difficulty": "중",
-            "related": "연관어1, 연관어2",
-            "channel": "이슈/일상"
+            "volume": randint(12000, 60000),
+            "difficulty": choice(difficulty),
+            "related": ", ".join(choice(related)),
+            "channel": choice(channels)
         })
     return enriched
 
 def save_to_json(keywords):
-    data = {"trends": keywords}
+    data = {
+        "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "trends": keywords
+    }
     with open("trends.json", "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 if __name__ == "__main__":
     try:
-        naver = fetch_naver_trends()
-        google = fetch_google_trends()
-        merged = merge_keywords(naver, google)
-        enriched = enrich_keywords(merged)
+        keywords = merge_keywords()
+        enriched = enrich_keywords(keywords)
         save_to_json(enriched)
         print(f"✅ {len(enriched)}개 키워드 저장 완료 ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})")
     except Exception as e:
