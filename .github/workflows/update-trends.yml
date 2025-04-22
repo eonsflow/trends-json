@@ -22,7 +22,7 @@ jobs:
       run: pip install beautifulsoup4 requests
 
     - name: Run trend fetcher
-      run: python trend_fetcher.py
+      run: python .github/workflows/trend_fetcher.py
 
     - name: Commit and push
       run: |
