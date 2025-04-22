@@ -22,7 +22,7 @@ jobs:
         run: pip install beautifulsoup4 requests
 
       - name: Run trend fetcher
-        run: .github/workflows/trend_fetcher.py  # 경로 확인 필수
+        run: python trend_fetcher.py
 
       - name: Commit and push
         env:
