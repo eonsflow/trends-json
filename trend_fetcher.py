@@ -8,19 +8,30 @@ def fetch_naver_trends():
     headers = {"User-Agent": "Mozilla/5.0"}
     res = requests.get(url, headers=headers)
     soup = BeautifulSoup(res.text, "html.parser")
+    return [span.text.strip() for span in soup.select(".item_title")]
 
-    keywords = [span.text.strip() for span in soup.select(".item_title")]
-    
+def fetch_google_trends():
+    url = "https://trends.google.com/trends/trendingsearches/daily/rss?geo=KR"
+    res = requests.get(url)
+    soup = BeautifulSoup(res.text, "xml")
+    return [item.find("title").text.strip() for item in soup.find_all("item")]
+
+def merge_keywords(naver, google, max_count=20):
+    both = [kw for kw in naver if kw in google]
+    only_naver = [kw for kw in naver if kw not in google]
+    only_google = [kw for kw in google if kw not in naver]
+    return (both + only_naver + only_google)[:max_count]
+
+def enrich_keywords(keywords):
     enriched = []
-    for kw in keywords[:20]:  # 🔥 최대 20개까지 추출
+    for kw in keywords:
         enriched.append({
             "keyword": kw,
-            "volume": 10000 + len(kw)*1000,       # 예시 검색량
-            "difficulty": "중",                    # 예시 경쟁도
-            "related": "연관어1, 연관어2",          # 예시 연관 키워드
-            "channel": "이슈/일상"                  # 예시 추천 채널
+            "volume": 10000 + len(kw) * 1000,
+            "difficulty": "중",
+            "related": "연관어1, 연관어2",
+            "channel": "이슈/일상"
         })
-
     return enriched
 
 def save_to_json(keywords):
@@ -30,8 +41,11 @@ def save_to_json(keywords):
 
 if __name__ == "__main__":
     try:
-        keywords = fetch_naver_trends()
-        save_to_json(keywords)
-        print(f"✅ {len(keywords)}개 키워드 저장 완료 ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})")
+        naver = fetch_naver_trends()
+        google = fetch_google_trends()
+        merged = merge_keywords(naver, google)
+        enriched = enrich_keywords(merged)
+        save_to_json(enriched)
+        print(f"✅ {len(enriched)}개 키워드 저장 완료 ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})")
     except Exception as e:
         print(f"❌ 오류 발생: {e}")
