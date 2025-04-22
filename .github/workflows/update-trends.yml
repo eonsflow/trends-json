@@ -30,15 +30,14 @@ jobs:
         git remote -v || true
 
     - name: Commit and push
-      env:
-  TOKEN: ${{ secrets.EONSFLOW }}
+  env:
+    TOKEN: ${{ secrets.EONSFLOW }}
+  run: |
+    git config user.name "언즈자동업데이트"
+    git config user.email "eons@eonsflow.dev"
+    git add trends.json
+    git commit -m "🔄 자동 업데이트: trends.json" || echo "변경 없음"
+    git remote set-url origin https://eonsflow:${TOKEN}@github.com/eonsflow/trends-json.git
+    git push origin HEAD:main
 
-run: |
-  git config user.name "언즈자동업데이트"
-  git config user.email "eons@eonsflow.dev"
-  git add trends.json
-  git commit -m "🔄 자동 업데이트: trends.json" || echo "변경 없음"
-  git push https://eonsflow:${TOKEN}@github.com/eonsflow/trends-json.git
-
-  git push https://${TOKEN}@github.com/eonsflow/trends-json.git
 
