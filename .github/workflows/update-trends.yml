@@ -25,17 +25,14 @@ jobs:
         run: python trend_fetcher.py
 
       - name: Commit and push
-  env:
-    TOKEN: ${{ secrets.EONSFLOW }}
-  run: |
-    git config user.name "언즈자동업데이트"
-    git config user.email "eons@eonsflow.dev"
-    git add trends.json
-    git commit -m "🔄 자동 업데이트: trends.json" || echo "변경 없음"
-    
-    # 🔥 캐시된 origin 제거 + 재설정
-    git remote remove origin
-    git remote add origin https://eonsflow:${TOKEN}@github.com/eonsflow/trends-json.git
-
-    git pull origin main --rebase
-    git push origin HEAD:main
+        env:
+          TOKEN: ${{ secrets.EONSFLOW }}
+        run: |
+          git config user.name "언즈자동업데이트"
+          git config user.email "eons@eonsflow.dev"
+          git add trends.json
+          git commit -m "🔄 자동 업데이트: trends.json" || echo "변경 없음"
+          git remote remove origin
+          git remote add origin https://eonsflow:${TOKEN}@github.com/eonsflow/trends-json.git
+          git pull origin main --rebase
+          git push origin HEAD:main
