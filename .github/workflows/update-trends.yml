@@ -33,6 +33,6 @@ jobs:
     git config user.email "eons@eonsflow.dev"
     git add trends.json
     git commit -m "🔄 자동 업데이트: trends.json" || echo "변경 없음"
-    git push https://${EONSFLOW}@github.com/eonsflow/trends-json.git
+    git push https://${GH_PAT}@github.com/eonsflow/trends-json.git
 
 
