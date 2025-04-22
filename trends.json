@@ -1,5 +1,53 @@
-[
-  { "keyword": "손흥민", "volume": 54000, "difficulty": "중", "related": "축구, EPL", "channel": "이슈/연예" },
-  { "keyword": "청년도약계좌", "volume": 32000, "difficulty": "하", "related": "정부지원, 예금", "channel": "재테크" },
-  { "keyword": "넷플릭스 해지", "volume": 18000, "difficulty": "중", "related": "구독, 요금", "channel": "실생활 팁" }
-]
+{
+  "trends": [
+    {
+      "keyword": "청년도약계좌",
+      "volume": 16000,
+      "difficulty": "중",
+      "related": "연관어1, 연관어2",
+      "channel": "이슈/일상"
+    },
+    {
+      "keyword": "손흥민",
+      "volume": 13000,
+      "difficulty": "중",
+      "related": "연관어1, 연관어2",
+      "channel": "이슈/일상"
+    },
+    {
+      "keyword": "넷플릭스 해지",
+      "volume": 17000,
+      "difficulty": "중",
+      "related": "연관어1, 연관어2",
+      "channel": "이슈/일상"
+    },
+    {
+      "keyword": "태풍 경로",
+      "volume": 15000,
+      "difficulty": "중",
+      "related": "연관어1, 연관어2",
+      "channel": "이슈/일상"
+    },
+    {
+      "keyword": "갤럭시S25",
+      "volume": 16000,
+      "difficulty": "중",
+      "related": "연관어1, 연관어2",
+      "channel": "이슈/일상"
+    },
+    {
+      "keyword": "폭우",
+      "volume": 12000,
+      "difficulty": "중",
+      "related": "연관어1, 연관어2",
+      "channel": "이슈/일상"
+    },
+    {
+      "keyword": "서울 날씨",
+      "volume": 15000,
+      "difficulty": "중",
+      "related": "연관어1, 연관어2",
+      "channel": "이슈/일상"
+    }
+  ]
+}
