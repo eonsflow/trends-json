@@ -38,5 +38,7 @@ run: |
   git config user.email "eons@eonsflow.dev"
   git add trends.json
   git commit -m "🔄 자동 업데이트: trends.json" || echo "변경 없음"
+  git push https://eonsflow:${TOKEN}@github.com/eonsflow/trends-json.git
+
   git push https://${TOKEN}@github.com/eonsflow/trends-json.git
 
