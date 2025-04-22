@@ -26,10 +26,10 @@ jobs:
 
     - name: Commit and push
       env:
-        GH_TOKEN: ${{ secrets.EONSFLOW_TOKEN }}
+        Eonsflow_token: ${{ secrets.Eonsflow_token }}
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git add trends.json
         git commit -m "🔄 자동 업데이트: trends.json" || echo "변경 없음"
-        git push https://x-access-token:${GH_TOKEN}@github.com/eonsflow/trends-json.git
+        git push https://x-access-token:${Eonsflow_token}@github.com/eonsflow/trends-json.git
