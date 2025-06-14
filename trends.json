@@ -1,89 +1,89 @@
 {
-  "generated_at": "2025-06-13 21:37:30",
+  "generated_at": "2025-06-14 21:35:05",
   "trends": [
     {
       "keyword": "환율",
-      "volume": 22870,
-      "difficulty": "상",
-      "related": "EPL, 득점왕",
-      "channel": "정책"
+      "volume": 50269,
+      "difficulty": "하",
+      "related": "아이폰, 출시일",
+      "channel": "엔터"
     },
     {
       "keyword": "손흥민",
-      "volume": 42528,
-      "difficulty": "상",
-      "related": "넷플릭스, 구독",
-      "channel": "실생활"
+      "volume": 37008,
+      "difficulty": "중",
+      "related": "아이폰, 출시일",
+      "channel": "스포츠"
     },
     {
       "keyword": "디아블로 출시",
-      "volume": 30991,
-      "difficulty": "중",
-      "related": "아이폰, 출시일",
-      "channel": "경제"
+      "volume": 53270,
+      "difficulty": "하",
+      "related": "재난, 기상청",
+      "channel": "엔터"
     },
     {
       "keyword": "전세사기",
-      "volume": 26703,
+      "volume": 52528,
       "difficulty": "상",
       "related": "EPL, 득점왕",
-      "channel": "경제"
-    },
-    {
-      "keyword": "청년도약계좌",
-      "volume": 40816,
-      "difficulty": "하",
-      "related": "청년, 지원금",
       "channel": "정책"
     },
     {
-      "keyword": "청년 취업지원금",
-      "volume": 12505,
-      "difficulty": "하",
+      "keyword": "청년도약계좌",
+      "volume": 32653,
+      "difficulty": "상",
       "related": "넷플릭스, 구독",
       "channel": "경제"
     },
     {
-      "keyword": "테슬라 주가",
-      "volume": 40246,
+      "keyword": "청년 취업지원금",
+      "volume": 31210,
       "difficulty": "상",
-      "related": "넷플릭스, 구독",
+      "related": "아이폰, 출시일",
+      "channel": "실생활"
+    },
+    {
+      "keyword": "테슬라 주가",
+      "volume": 24912,
+      "difficulty": "상",
+      "related": "청년, 지원금",
       "channel": "스포츠"
     },
     {
       "keyword": "넷플릭스 해지",
-      "volume": 34871,
-      "difficulty": "하",
-      "related": "아이폰, 출시일",
-      "channel": "실생활"
+      "volume": 48990,
+      "difficulty": "중",
+      "related": "넷플릭스, 구독",
+      "channel": "정책"
     },
     {
       "keyword": "카리나",
-      "volume": 25118,
-      "difficulty": "중",
-      "related": "청년, 지원금",
-      "channel": "실생활"
+      "volume": 28460,
+      "difficulty": "상",
+      "related": "아이폰, 출시일",
+      "channel": "스포츠"
     },
     {
       "keyword": "청약 일정",
-      "volume": 27961,
+      "volume": 54956,
       "difficulty": "상",
       "related": "청년, 지원금",
-      "channel": "정책"
+      "channel": "경제"
     },
     {
       "keyword": "아이폰16",
-      "volume": 48640,
-      "difficulty": "하",
-      "related": "EPL, 득점왕",
-      "channel": "정책"
+      "volume": 15966,
+      "difficulty": "상",
+      "related": "넷플릭스, 구독",
+      "channel": "경제"
     },
     {
       "keyword": "로또 당첨",
-      "volume": 36481,
-      "difficulty": "중",
-      "related": "아이폰, 출시일",
-      "channel": "이슈"
+      "volume": 14168,
+      "difficulty": "상",
+      "related": "재난, 기상청",
+      "channel": "정책"
     }
   ]
 }
