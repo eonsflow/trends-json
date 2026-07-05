@@ -25,6 +25,9 @@ jobs:
         env:
           NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          NAVER_SAD_CUSTOMER_ID: ${{ secrets.NAVER_SAD_CUSTOMER_ID }}
+          NAVER_SAD_API_KEY: ${{ secrets.NAVER_SAD_API_KEY }}
+          NAVER_SAD_SECRET: ${{ secrets.NAVER_SAD_SECRET }}
         run: python trend_fetcher.py
 
       - name: Commit and push

@@ -1,30 +1,39 @@
 # Daily Trend Fetcher
 
-Automatically fetches daily trends and enriches them with **Naver DataLab
-search-volume trends** (검색량 추이).
+Automatically fetches daily trends and enriches each keyword with **Naver
+search-volume + search-volume trend** (검색량 · 검색량 추이), ported from the
+`citeflow` project's `lib/naver.ts`.
 
-- Keyword list is merged from Naver/Google sources.
-- For each keyword, the [Naver DataLab Search Trend API](https://developers.naver.com/docs/serviceapi/datalab/search/search.md)
-  (`POST /v1/datalab/search`, up to 5 keyword groups per request) provides:
-  - `volume`: the most recent relative search ratio (0–100, DataLab scale)
-  - `trend`: the daily time series `[{ "date", "ratio" }, ...]` for the last 30 days
-- Output is saved to `trends.json` and served via GitHub Pages.
+Two Naver APIs are used (up to 5 keywords per request, batched):
+
+1. **DataLab Search Trend** (`POST /v1/datalab/search`) → `trend`
+   - Monthly relative index (0–100, normalized within each request)
+   - `trend`: `[{ "period", "ratio" }, ...]` for the last 12 months
+2. **Search Ad Keyword Tool** (`GET api.searchad.naver.com/keywordstool`,
+   HMAC-SHA256 signed) → `volume`
+   - `volume`: absolute monthly search count (PC + mobile), exact match only
+
+Output is saved to `trends.json` and served via GitHub Pages.
 
 ## Required GitHub Secrets
 
 Set these in **Settings → Secrets and variables → Actions**:
 
-| Secret | Description |
-| --- | --- |
-| `NAVER_CLIENT_ID` | Naver DataLab (Developers) application Client ID |
-| `NAVER_CLIENT_SECRET` | Naver DataLab application Client Secret |
-| `EONSFLOW` | GitHub token used to commit `trends.json` |
+| Secret | Used by | Description |
+| --- | --- | --- |
+| `NAVER_CLIENT_ID` | DataLab | Naver Developers application Client ID |
+| `NAVER_CLIENT_SECRET` | DataLab | Naver Developers application Client Secret |
+| `NAVER_SAD_CUSTOMER_ID` | Search Ad | Naver Search Ad customer ID |
+| `NAVER_SAD_API_KEY` | Search Ad | Naver Search Ad API access license |
+| `NAVER_SAD_SECRET` | Search Ad | Naver Search Ad secret key (for HMAC signature) |
+| `EONSFLOW` | workflow | GitHub token used to commit `trends.json` |
 
-If the DataLab credentials are missing or the API call fails, the fetcher
-falls back to a random `volume` and an empty `trend` so the job never breaks.
+Each source degrades gracefully: if its credentials are missing or the call
+fails, `trend` falls back to `[]` and `volume` falls back to a random value,
+so the job never breaks.
 
 ## Notes
 
 DataLab ratios are relative to the maximum **within each request**, so values
-are comparable inside a keyword's own time series but not perfectly comparable
-across separate batches of keywords.
+are comparable inside a keyword's own time series but not across batches. The
+absolute `volume` comes from the Search Ad keyword tool.

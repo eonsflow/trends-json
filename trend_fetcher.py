@@ -1,19 +1,28 @@
 import os
+import re
 import json
 import time
+import base64
+import hmac
+import hashlib
 from datetime import datetime, timedelta
 
 import requests
 from bs4 import BeautifulSoup
 
-# ── 네이버 데이터랩 검색어 트렌드 API 설정 ───────────────────────────────
-# 키는 코드에 넣지 않고 환경변수(GitHub Secrets)에서 읽는다.
+# ── 네이버 Developers (DataLab 검색어트렌드) ────────────────────────────
+# 상대지수(0~100, 요청 내 정규화). 키워드 자체 시계열의 모양/피크월 산출용.
 NAVER_CLIENT_ID = os.getenv("NAVER_CLIENT_ID", "")
 NAVER_CLIENT_SECRET = os.getenv("NAVER_CLIENT_SECRET", "")
-DATALAB_URL = "https://openapi.naver.com/v1/datalab/search"
-DATALAB_MAX_GROUPS = 5          # 한 번에 보낼 수 있는 키워드 그룹 최대 5개
-DATALAB_TREND_DAYS = 30         # 검색량 추이 조회 기간(일)
-DATALAB_TIME_UNIT = "date"      # date | week | month
+
+# ── 네이버 검색광고 (키워드도구, 절대 검색량) ──────────────────────────
+SAD_CUSTOMER = os.getenv("NAVER_SAD_CUSTOMER_ID", "")
+SAD_KEY = os.getenv("NAVER_SAD_API_KEY", "")
+SAD_SECRET = os.getenv("NAVER_SAD_SECRET", "")
+
+DATALAB_TIME_UNIT = "month"     # 키워드별 월별 추이
+DATALAB_TREND_MONTHS = 12       # 검색량 추이 조회 기간(개월)
+NAVER_MAX_KEYWORDS = 5          # 한 번에 보낼 수 있는 키워드 최대 5개
 
 
 def fetch_naver_trends():
@@ -49,63 +58,137 @@ def merge_keywords():
     return deduped[:20]
 
 
-# ── 데이터랩 검색량 추이 ─────────────────────────────────────────────────
-def _datalab_request(keyword_groups, start_date, end_date):
-    """키워드 그룹(<=5개) 한 배치를 데이터랩 API로 조회."""
-    headers = {
-        "X-Naver-Client-Id": NAVER_CLIENT_ID,
-        "X-Naver-Client-Secret": NAVER_CLIENT_SECRET,
-        "Content-Type": "application/json",
-    }
+def _norm(s):
+    return re.sub(r"\s+", "", s or "")
+
+
+def _parse_vol(v):
+    """검색광고 검색량 파싱. "< 10" → 10 처럼 숫자만 남긴다."""
+    if isinstance(v, (int, float)):
+        return int(v)
+    s = re.sub(r"[^0-9]", "", str(v if v is not None else ""))
+    return int(s) if s else 0
+
+
+def _chunks(items, size):
+    for i in range(0, len(items), size):
+        yield items[i:i + size]
+
+
+# ── 데이터랩 검색어트렌드: 최대 5개 키워드 묶음 → 키워드별 월별 추이 ──────
+def datalab_trend(keywords, start_date, end_date, ages=None):
+    """
+    반환: { 키워드: [{"period","ratio"}...] }  (각 키워드는 자체 0~100 상대지수)
+    """
+    if not (NAVER_CLIENT_ID and NAVER_CLIENT_SECRET):
+        raise RuntimeError("NAVER_CLIENT_ID/SECRET 없음")
+
+    groups = [{"groupName": k, "keywords": [k]} for k in keywords[:NAVER_MAX_KEYWORDS]]
     body = {
         "startDate": start_date,
         "endDate": end_date,
         "timeUnit": DATALAB_TIME_UNIT,
-        "keywordGroups": [
-            {"groupName": kw, "keywords": [kw]} for kw in keyword_groups
-        ],
+        "keywordGroups": groups,
     }
-    res = requests.post(DATALAB_URL, headers=headers,
-                        data=json.dumps(body), timeout=15)
-    res.raise_for_status()
-    return res.json()
+    if ages:
+        body["ages"] = ages
+
+    res = requests.post(
+        "https://openapi.naver.com/v1/datalab/search",
+        headers={
+            "X-Naver-Client-Id": NAVER_CLIENT_ID,
+            "X-Naver-Client-Secret": NAVER_CLIENT_SECRET,
+            "Content-Type": "application/json",
+        },
+        data=json.dumps(body),
+        timeout=15,
+    )
+    if not res.ok:
+        raise RuntimeError(f"DataLab {res.status_code}: {res.text[:150]}")
+
+    data = res.json()
+    out = {}
+    for g in data.get("results", []) or []:
+        out[g.get("title")] = [
+            {"period": d.get("period"), "ratio": float(d.get("ratio", 0))}
+            for d in (g.get("data") or [])
+        ]
+    return out
 
 
-def fetch_datalab_trends(keywords):
+# ── 검색광고 키워드도구: 키워드별 절대 월간 검색량(PC+모바일) ───────────
+def _sad_sign(ts, method, uri):
+    msg = f"{ts}.{method}.{uri}"
+    digest = hmac.new(SAD_SECRET.encode("utf-8"), msg.encode("utf-8"), hashlib.sha256).digest()
+    return base64.b64encode(digest).decode("utf-8")
+
+
+def search_ad_volume(keywords):
+    """반환: { 키워드: 절대_월간_검색량 }  (입력 키워드와 정확 매칭되는 것만)"""
+    if not (SAD_CUSTOMER and SAD_KEY and SAD_SECRET):
+        raise RuntimeError("NAVER_SAD_* 없음")
+
+    ts = str(round(time.time() * 1000))
+    uri = "/keywordstool"
+    sig = _sad_sign(ts, "GET", uri)
+    hint = ",".join(_norm(k) for k in keywords[:NAVER_MAX_KEYWORDS])
+
+    res = requests.get(
+        f"https://api.searchad.naver.com{uri}?hintKeywords={requests.utils.quote(hint)}&showDetail=1",
+        headers={
+            "X-Timestamp": ts,
+            "X-API-KEY": SAD_KEY,
+            "X-Customer": SAD_CUSTOMER,
+            "X-Signature": sig,
+        },
+        timeout=15,
+    )
+    if not res.ok:
+        raise RuntimeError(f"SearchAd {res.status_code}: {res.text[:150]}")
+
+    data = res.json()
+    by_key = {}
+    for r in data.get("keywordList", []) or []:
+        by_key[_norm(str(r.get("relKeyword", "")))] = (
+            _parse_vol(r.get("monthlyPcQcCnt")) + _parse_vol(r.get("monthlyMobileQcCnt"))
+        )
+    # 입력 키워드와 정확 매칭되는 것만
+    out = {}
+    for k in keywords:
+        v = by_key.get(_norm(k))
+        if v is not None:
+            out[k] = v
+    return out
+
+
+def fetch_naver_metrics(keywords):
     """
-    키워드별 검색량 추이를 데이터랩에서 가져온다.
-    반환: { 키워드: {"trend": [{"date","ratio"}...], "volume": 최근_상대비율} }
-    데이터랩 ratio는 각 요청 내 최댓값을 100으로 하는 상대값이다.
+    데이터랩 추이 + 검색광고 절대 검색량을 5개씩 배치로 모아 합친다.
+    반환: { 키워드: {"volume": int|None, "trend": [{"period","ratio"}...]} }
     """
-    if not (NAVER_CLIENT_ID and NAVER_CLIENT_SECRET):
-        print("⚠️ NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 미설정 — 데이터랩 건너뜀")
-        return {}
-
     end_date = datetime.now().strftime("%Y-%m-%d")
-    start_date = (datetime.now() - timedelta(days=DATALAB_TREND_DAYS)).strftime("%Y-%m-%d")
+    start_date = (datetime.now() - timedelta(days=DATALAB_TREND_MONTHS * 30)).strftime("%Y-%m-%d")
 
-    result = {}
-    # 키워드를 5개씩(그룹 최대치) 나눠 배치 호출
-    for i in range(0, len(keywords), DATALAB_MAX_GROUPS):
-        batch = keywords[i:i + DATALAB_MAX_GROUPS]
+    metrics = {kw: {"volume": None, "trend": []} for kw in keywords}
+
+    for batch in _chunks(keywords, NAVER_MAX_KEYWORDS):
         try:
-            data = _datalab_request(batch, start_date, end_date)
+            for kw, points in datalab_trend(batch, start_date, end_date).items():
+                if kw in metrics:
+                    metrics[kw]["trend"] = points
         except Exception as e:
-            print(f"⚠️ 데이터랩 조회 실패({batch}): {e}")
-            continue
+            print(f"⚠️ 데이터랩 추이 실패({batch}): {e}")
 
-        for entry in data.get("results", []):
-            kw = entry.get("title")
-            points = [
-                {"date": p["period"], "ratio": p["ratio"]}
-                for p in entry.get("data", [])
-            ]
-            latest = points[-1]["ratio"] if points else 0
-            result[kw] = {"trend": points, "volume": round(latest, 1)}
+        try:
+            for kw, vol in search_ad_volume(batch).items():
+                if kw in metrics:
+                    metrics[kw]["volume"] = vol
+        except Exception as e:
+            print(f"⚠️ 검색광고 검색량 실패({batch}): {e}")
 
         time.sleep(0.3)  # API 부하 완화
 
-    return result
+    return metrics
 
 
 def enrich_keywords(keywords):
@@ -115,22 +198,18 @@ def enrich_keywords(keywords):
                ["아이폰", "출시일"], ["EPL", "득점왕"]]
     channels = ["이슈", "실생활", "정책", "경제", "엔터", "스포츠"]
 
-    datalab = fetch_datalab_trends(keywords)
+    metrics = fetch_naver_metrics(keywords)
 
     enriched = []
     for kw in keywords:
-        info = datalab.get(kw)
-        if info:
-            volume = info["volume"]          # 데이터랩 최근 검색량(상대비율)
-            trend = info["trend"]            # 검색량 추이 시계열
-        else:
-            volume = randint(12000, 60000)   # 데이터랩 미연동/실패 시 폴백
-            trend = []
-
+        m = metrics.get(kw, {})
+        volume = m.get("volume")
+        if volume is None:                    # 검색광고 미연동/실패 시 폴백
+            volume = randint(12000, 60000)
         enriched.append({
             "keyword": kw,
-            "volume": volume,
-            "trend": trend,
+            "volume": volume,                 # 검색광고 절대 월간 검색량(PC+모바일)
+            "trend": m.get("trend", []),      # 데이터랩 월별 검색량 추이(상대지수)
             "difficulty": choice(difficulty),
             "related": ", ".join(choice(related)),
             "channel": choice(channels),
