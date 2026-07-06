@@ -10,8 +10,10 @@ Two Naver APIs are used (up to 5 keywords per request, batched):
    - Monthly relative index (0–100, normalized within each request)
    - `trend`: `[{ "period", "ratio" }, ...]` for the last 12 months
 2. **Search Ad Keyword Tool** (`GET api.searchad.naver.com/keywordstool`,
-   HMAC-SHA256 signed) → `volume`
+   HMAC-SHA256 signed) → `volume` and `related`
    - `volume`: absolute monthly search count (PC + mobile), exact match only
+   - `related`: related keywords `[{ "keyword", "volume", "comp" }, ...]`,
+     sorted by search volume (anchored to the seed's head token, deduped)
 
 Output is saved to `trends.json` and served via GitHub Pages.
 

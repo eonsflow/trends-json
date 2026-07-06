@@ -161,16 +161,76 @@ def search_ad_volume(keywords):
     return out
 
 
+# ── 검색광고 연관 키워드: 입력어 제외, 실제 검색량 순 top N ──────────────
+def search_ad_related(keyword, limit=12):
+    """
+    반환: [{"keyword","volume","comp"}...]  (앵커 포함 연관어만, 검색량 내림차순)
+    """
+    if not (SAD_CUSTOMER and SAD_KEY and SAD_SECRET):
+        raise RuntimeError("NAVER_SAD_* 없음")
+
+    ts = str(round(time.time() * 1000))
+    uri = "/keywordstool"
+    sig = _sad_sign(ts, "GET", uri)
+
+    res = requests.get(
+        f"https://api.searchad.naver.com{uri}"
+        f"?hintKeywords={requests.utils.quote(_norm(keyword))}&showDetail=1",
+        headers={
+            "X-Timestamp": ts,
+            "X-API-KEY": SAD_KEY,
+            "X-Customer": SAD_CUSTOMER,
+            "X-Signature": sig,
+        },
+        timeout=15,
+    )
+    if not res.ok:
+        raise RuntimeError(f"SearchAd {res.status_code}: {res.text[:150]}")
+
+    data = res.json()
+    self_n = _norm(keyword)
+    # 관련성 앵커 = 시드 첫 토큰(다어절은 핵심어). 이걸 포함하는 연관어만 = 진짜 확장 키워드.
+    first = re.split(r"\s+", keyword)[0] if keyword.strip() else ""
+    anchor = _norm(first or keyword)
+
+    rows = []
+    for r in data.get("keywordList", []) or []:
+        kw = str(r.get("relKeyword", ""))
+        n = _norm(kw)
+        if kw and n != self_n and len(anchor) >= 2 and anchor in n:
+            rows.append({
+                "keyword": kw,
+                "volume": _parse_vol(r.get("monthlyPcQcCnt")) + _parse_vol(r.get("monthlyMobileQcCnt")),
+                "comp": str(r.get("compIdx", "")),
+            })
+    rows.sort(key=lambda x: x["volume"], reverse=True)
+
+    seen = set()
+    out = []
+    for r in rows:
+        n = _norm(r["keyword"])
+        if n in seen:
+            continue
+        seen.add(n)
+        out.append(r)
+        if len(out) >= limit:
+            break
+    return out
+
+
 def fetch_naver_metrics(keywords):
     """
-    데이터랩 추이 + 검색광고 절대 검색량을 5개씩 배치로 모아 합친다.
-    반환: { 키워드: {"volume": int|None, "trend": [{"period","ratio"}...]} }
+    데이터랩 추이 + 검색광고 절대 검색량 + 연관 키워드를 모아 합친다.
+    반환: { 키워드: {"volume": int|None,
+                     "trend": [{"period","ratio"}...],
+                     "related": [{"keyword","volume","comp"}...]} }
     """
     end_date = datetime.now().strftime("%Y-%m-%d")
     start_date = (datetime.now() - timedelta(days=DATALAB_TREND_MONTHS * 30)).strftime("%Y-%m-%d")
 
-    metrics = {kw: {"volume": None, "trend": []} for kw in keywords}
+    metrics = {kw: {"volume": None, "trend": [], "related": []} for kw in keywords}
 
+    # 추이·검색량은 5개씩 배치 호출
     for batch in _chunks(keywords, NAVER_MAX_KEYWORDS):
         try:
             for kw, points in datalab_trend(batch, start_date, end_date).items():
@@ -188,14 +248,20 @@ def fetch_naver_metrics(keywords):
 
         time.sleep(0.3)  # API 부하 완화
 
+    # 연관 키워드는 키워드별 호출
+    for kw in keywords:
+        try:
+            metrics[kw]["related"] = search_ad_related(kw)
+        except Exception as e:
+            print(f"⚠️ 연관 키워드 실패({kw}): {e}")
+        time.sleep(0.2)
+
     return metrics
 
 
 def enrich_keywords(keywords):
     from random import choice, randint
     difficulty = ["하", "중", "상"]
-    related = [["재난", "기상청"], ["넷플릭스", "구독"], ["청년", "지원금"],
-               ["아이폰", "출시일"], ["EPL", "득점왕"]]
     channels = ["이슈", "실생활", "정책", "경제", "엔터", "스포츠"]
 
     metrics = fetch_naver_metrics(keywords)
@@ -210,8 +276,8 @@ def enrich_keywords(keywords):
             "keyword": kw,
             "volume": volume,                 # 검색광고 절대 월간 검색량(PC+모바일)
             "trend": m.get("trend", []),      # 데이터랩 월별 검색량 추이(상대지수)
+            "related": m.get("related", []),  # 검색광고 연관 키워드(검색량 순)
             "difficulty": choice(difficulty),
-            "related": ", ".join(choice(related)),
             "channel": choice(channels),
         })
     return enriched
