@@ -1,89 +1,89 @@
 {
-  "generated_at": "2026-09-13 23:15:43",
+  "generated_at": "2026-09-14 23:54:30",
   "trends": [
     {
       "keyword": "환율",
-      "volume": 32548,
-      "difficulty": "하",
-      "related": "넷플릭스, 구독",
+      "volume": 54688,
+      "difficulty": "상",
+      "related": "청년, 지원금",
       "channel": "실생활"
     },
     {
       "keyword": "손흥민",
-      "volume": 18540,
-      "difficulty": "상",
-      "related": "EPL, 득점왕",
-      "channel": "경제"
+      "volume": 56066,
+      "difficulty": "하",
+      "related": "청년, 지원금",
+      "channel": "이슈"
     },
     {
       "keyword": "디아블로 출시",
-      "volume": 52061,
-      "difficulty": "상",
-      "related": "재난, 기상청",
-      "channel": "실생활"
+      "volume": 32978,
+      "difficulty": "중",
+      "related": "EPL, 득점왕",
+      "channel": "스포츠"
     },
     {
       "keyword": "전세사기",
-      "volume": 25684,
-      "difficulty": "중",
-      "related": "청년, 지원금",
+      "volume": 29756,
+      "difficulty": "상",
+      "related": "재난, 기상청",
       "channel": "엔터"
     },
     {
       "keyword": "청년도약계좌",
-      "volume": 54410,
-      "difficulty": "상",
-      "related": "재난, 기상청",
-      "channel": "엔터"
+      "volume": 34920,
+      "difficulty": "중",
+      "related": "아이폰, 출시일",
+      "channel": "이슈"
     },
     {
       "keyword": "청년 취업지원금",
-      "volume": 56585,
+      "volume": 12808,
       "difficulty": "상",
       "related": "넷플릭스, 구독",
-      "channel": "정책"
-    },
-    {
-      "keyword": "테슬라 주가",
-      "volume": 54101,
-      "difficulty": "중",
-      "related": "재난, 기상청",
       "channel": "실생활"
     },
     {
-      "keyword": "넷플릭스 해지",
-      "volume": 47492,
-      "difficulty": "하",
+      "keyword": "테슬라 주가",
+      "volume": 56220,
+      "difficulty": "중",
       "related": "재난, 기상청",
-      "channel": "스포츠"
+      "channel": "경제"
+    },
+    {
+      "keyword": "넷플릭스 해지",
+      "volume": 40412,
+      "difficulty": "하",
+      "related": "청년, 지원금",
+      "channel": "정책"
     },
     {
       "keyword": "카리나",
-      "volume": 25400,
-      "difficulty": "하",
+      "volume": 16106,
+      "difficulty": "중",
       "related": "넷플릭스, 구독",
       "channel": "엔터"
     },
     {
       "keyword": "청약 일정",
-      "volume": 18555,
-      "difficulty": "상",
-      "related": "청년, 지원금",
-      "channel": "실생활"
+      "volume": 54368,
+      "difficulty": "하",
+      "related": "EPL, 득점왕",
+      "channel": "엔터"
     },
     {
       "keyword": "아이폰16",
-      "volume": 34425,
-      "difficulty": "중",
-      "related": "재난, 기상청",
+      "volume": 59616,
+      "difficulty": "상",
+      "related": "넷플릭스, 구독",
       "channel": "이슈"
     },
     {
       "keyword": "로또 당첨",
-      "volume": 41439,
-      "difficulty": "하",
-      "related": "아이폰, 출시일",
-      "channel": "정책"
+      "volume": 47920,
+      "difficulty": "상",
+      "related": "재난, 기상청",
+      "channel": "엔터"
     }
   ]
 }
